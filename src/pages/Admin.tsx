@@ -7,6 +7,8 @@ import {
   Trash2,
   Plus,
   Search,
+  MessageSquare,
+  CheckCircle2,
 } from "lucide-react";
 
 import SiteHeader from "@/components/SiteHeader";
@@ -37,15 +39,24 @@ type LicenseKeyRow = {
   } | null;
 };
 
+type SupportTicket = {
+  id: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "open" | "closed";
+  created_at: string;
+};
+
 const Admin = () => {
   const { user, loading } = useAuth();
 
-  // CHANGE THIS TO YOUR EMAIL
   const adminEmail = "yurieforlife@gmail.com";
   const isAdmin = user?.email === adminEmail;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [keys, setKeys] = useState<LicenseKeyRow[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const [newKey, setNewKey] = useState("");
@@ -122,9 +133,27 @@ const Admin = () => {
     setKeys((data as LicenseKeyRow[]) || []);
   };
 
+  const fetchTickets = async () => {
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .select("id, email, subject, message, status, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Failed to load support tickets",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTickets((data as SupportTicket[]) || []);
+  };
+
   const refreshAll = async () => {
     setLoadingData(true);
-    await Promise.all([fetchProducts(), fetchKeys()]);
+    await Promise.all([fetchProducts(), fetchKeys(), fetchTickets()]);
     setLoadingData(false);
   };
 
@@ -342,6 +371,55 @@ const Admin = () => {
     await fetchKeys();
   };
 
+  const handleCloseTicket = async (ticket: SupportTicket) => {
+    const { error } = await supabase
+      .from("support_tickets")
+      .update({ status: "closed" })
+      .eq("id", ticket.id);
+
+    if (error) {
+      toast({
+        title: "Failed to close ticket",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Ticket closed",
+      description: ticket.subject,
+    });
+
+    await fetchTickets();
+  };
+
+  const handleDeleteTicket = async (ticket: SupportTicket) => {
+    const confirmed = window.confirm(`Delete ticket "${ticket.subject}"?`);
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("support_tickets")
+      .delete()
+      .eq("id", ticket.id);
+
+    if (error) {
+      toast({
+        title: "Failed to delete ticket",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Ticket deleted",
+      description: ticket.subject,
+    });
+
+    await fetchTickets();
+  };
+
   if (loading) {
     return (
       <div className="grid min-h-screen place-items-center text-muted-foreground">
@@ -365,7 +443,7 @@ const Admin = () => {
             <span className="text-gradient-brand">Admin Panel</span>
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Create, revoke, reset, and remove license keys.
+            Manage license keys and support tickets.
           </p>
         </div>
 
@@ -539,6 +617,82 @@ const Admin = () => {
                 ))
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-5 w-5" />
+            <h2 className="text-2xl font-extrabold tracking-tight">
+              Support tickets
+            </h2>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Review and manage user support requests.
+          </p>
+
+          <div className="mt-6 space-y-4">
+            {loadingData ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                Loading tickets...
+              </div>
+            ) : tickets.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No support tickets yet.
+              </div>
+            ) : (
+              tickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="rounded-2xl border border-border bg-card/50 p-5"
+                >
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-lg font-bold">{ticket.subject}</h3>
+                        <span className="rounded-full border border-border px-3 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          {ticket.status}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        From: {ticket.email}
+                      </div>
+
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Created: {new Date(ticket.created_at).toLocaleString()}
+                      </div>
+
+                      <p className="mt-4 whitespace-pre-wrap text-sm text-foreground/85">
+                        {ticket.message}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {ticket.status !== "closed" && (
+                        <Button
+                          variant="outline"
+                          className="rounded-2xl"
+                          onClick={() => handleCloseTicket(ticket)}
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Close
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="destructive"
+                        className="rounded-2xl"
+                        onClick={() => handleDeleteTicket(ticket)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </main>
