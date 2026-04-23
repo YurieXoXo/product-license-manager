@@ -1,18 +1,26 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
+import Index from "@/pages/Index";
+import Support from "@/pages/Support";
+import ProductDetail from "@/pages/ProductDetail";
+import NotFound from "@/pages/NotFound";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
+        {/* Public */}
+        <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/support" element={<Support />} />
 
+        {/* Protected */}
         <Route
           path="/dashboard"
           element={
@@ -22,7 +30,17 @@ const App = () => {
           }
         />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/product/:id"
+          element={
+            <ProtectedRoute>
+              <ProductDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
