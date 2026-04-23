@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   KeyRound,
   ShieldX,
@@ -166,7 +166,10 @@ const Admin = () => {
   const generateRandomKey = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const chunk = (length: number) =>
-      Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+      Array.from(
+        { length },
+        () => chars[Math.floor(Math.random() * chars.length)]
+      ).join("");
 
     return `${chunk(5)}-${chunk(5)}-${chunk(5)}-${chunk(5)}`;
   };
@@ -669,6 +672,10 @@ const Admin = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      <Button asChild variant="outline" className="rounded-2xl">
+                        <Link to={`/support/${ticket.id}`}>Open chat</Link>
+                      </Button>
+
                       {ticket.status !== "closed" && (
                         <Button
                           variant="outline"
