@@ -30,12 +30,8 @@ type UserLicense = {
   } | null;
 };
 
-const downloadLinks: Record<string, string> = {
-  "csgo-2": "#",
-  "valorant": "#",
-  "arc-raiders": "#",
-  "roblox": "#",
-};
+const DUMMY_DOWNLOAD_URL =
+  "https://www.mediafire.com/file/2s9ccmzwdv4lhhd/favicon.ico/file";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -52,26 +48,10 @@ const Dashboard = () => {
     "there";
 
   const stats = [
-    {
-      label: "Active licenses",
-      value: String(licenses.length),
-      icon: KeyRound,
-    },
-    {
-      label: "Wallet balance",
-      value: "$0.00",
-      icon: Wallet,
-    },
-    {
-      label: "Downloads",
-      value: "0",
-      icon: Download,
-    },
-    {
-      label: "Sessions",
-      value: "0h",
-      icon: Activity,
-    },
+    { label: "Active licenses", value: String(licenses.length), icon: KeyRound },
+    { label: "Wallet balance", value: "$0.00", icon: Wallet },
+    { label: "Downloads", value: "0", icon: Download },
+    { label: "Sessions", value: "0h", icon: Activity },
   ];
 
   const fetchLicenses = async () => {
@@ -180,28 +160,8 @@ const Dashboard = () => {
     navigate("/login", { replace: true });
   };
 
-  const handleDownload = (slug?: string) => {
-    if (!slug) {
-      toast({
-        title: "Download unavailable",
-        description: "This product does not have a download link yet.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const url = downloadLinks[slug];
-
-    if (!url || url === "#") {
-      toast({
-        title: "Download unavailable",
-        description: "This product does not have a download link yet.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    window.open(url, "_blank");
+  const handleDownload = () => {
+    window.open(DUMMY_DOWNLOAD_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -327,7 +287,7 @@ const Dashboard = () => {
                       <Button
                         variant="outline"
                         className="rounded-2xl"
-                        onClick={() => handleDownload(license.products?.slug)}
+                        onClick={handleDownload}
                       >
                         <Download className="mr-2 h-4 w-4" />
                         Download
