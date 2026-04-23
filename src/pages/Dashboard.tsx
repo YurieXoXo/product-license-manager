@@ -1,27 +1,158 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  KeyRound,
+  LogOut,
+  ShieldCheck,
+  Wallet,
+  Download,
+  Activity,
+} from "lucide-react";
+
 import SiteHeader from "@/components/SiteHeader";
 import SiteOrbs from "@/components/SiteOrbs";
-import { Activity, Download, Key, Wallet, LogOut } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
-const stats = [
-  { label: "Active licenses", value: "0", icon: Key },
-  { label: "Wallet balance", value: "$0.00", icon: Wallet },
-  { label: "Downloads", value: "0", icon: Download },
-  { label: "Sessions", value: "0h", icon: Activity },
-];
+type UserLicense = {
+  id: string;
+  status: string;
+  activated_at: string;
+  expires_at: string | null;
+  product_id: string;
+  products: {
+    name: string;
+    slug: string;
+  } | null;
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [licenseKey, setLicenseKey] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [loadingLicenses, setLoadingLicenses] = useState(true);
+  const [licenses, setLicenses] = useState<UserLicense[]>([]);
+
   const displayName =
     (user?.user_metadata?.username as string) ||
     user?.email?.split("@")[0] ||
     "there";
+
+  const stats = [
+    {
+      label: "Active licenses",
+      value: String(
+        licenses.filter((license) => license.status === "active").length
+      ),
+      icon: KeyRound,
+    },
+    {
+      label: "Wallet balance",
+      value: "$0.00",
+      icon: Wallet,
+    },
+    {
+      label: "Downloads",
+      value: "0",
+      icon: Download,
+    },
+    {
+      label: "Sessions",
+      value: "0h",
+      icon: Activity,
+    },
+  ];
+
+  const fetchLicenses = async () => {
+    setLoadingLicenses(true);
+
+    const { data, error } = await supabase
+      .from("user_licenses")
+      .select(
+        `
+        id,
+        status,
+        activated_at,
+        expires_at,
+        product_id,
+        products (
+          name,
+          slug
+        )
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    setLoadingLicenses(false);
+
+    if (error) {
+      toast({
+        title: "Failed to load licenses",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLicenses((data as UserLicense[]) || []);
+  };
+
+  useEffect(() => {
+    fetchLicenses();
+  }, []);
+
+  const handleActivate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!licenseKey.trim()) {
+      toast({
+        title: "Missing license key",
+        description: "Please enter a valid license key.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setActivating(true);
+
+    const { data, error } = await supabase.rpc("activate_license_key", {
+      input_key: licenseKey.trim(),
+    });
+
+    setActivating(false);
+
+    if (error) {
+      toast({
+        title: "Activation failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!data?.success) {
+      toast({
+        title: "Activation failed",
+        description: data?.message || "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "License activated",
+      description: `${data.product} activated successfully.`,
+    });
+
+    setLicenseKey("");
+    fetchLicenses();
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -55,15 +186,11 @@ const Dashboard = () => {
               <span className="text-gradient-brand">Welcome, {displayName}</span>
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Manage your licenses, downloads and account.
+              Activate and manage your licenses.
             </p>
           </div>
 
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="rounded-2xl"
-          >
+          <Button onClick={handleLogout} variant="outline" className="rounded-2xl">
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
@@ -88,37 +215,103 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <section className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
-            <h2 className="text-xl font-extrabold tracking-tight">
-              Your licenses
+            <h2 className="text-2xl font-extrabold tracking-tight">
+              Activate license
             </h2>
-            <div className="mt-5 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              You don't own any licenses yet. Browse products to get started.
-            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Enter your license key to activate a product.
+            </p>
+
+            <form className="mt-6 space-y-4" onSubmit={handleActivate}>
+              <Input
+                value={licenseKey}
+                onChange={(e) => setLicenseKey(e.target.value)}
+                placeholder="Enter your license key"
+                className="h-12 rounded-2xl"
+              />
+
+              <Button
+                type="submit"
+                disabled={activating}
+                className="h-12 w-full rounded-2xl bg-gradient-cta text-primary-foreground shadow-glow"
+              >
+                {activating ? "Activating..." : "Activate license"}
+              </Button>
+            </form>
           </div>
 
           <div className="rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
-            <h2 className="text-xl font-extrabold tracking-tight">
-              Quick actions
+            <h2 className="text-2xl font-extrabold tracking-tight">
+              Your licenses
             </h2>
-            <div className="mt-5 space-y-3">
-              {[
-                "Download loader",
-                "Reset HWID",
-                "Generate API key",
-                "View invoices",
-              ].map((a) => (
-                <button
-                  key={a}
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-card/50 px-4 py-3 text-sm font-semibold transition-colors hover:border-foreground/20 hover:bg-secondary/60"
-                >
-                  {a} <span className="text-muted-foreground">→</span>
-                </button>
-              ))}
+            <p className="mt-2 text-sm text-muted-foreground">
+              All activated products on your account.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              {loadingLicenses ? (
+                <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  Loading licenses...
+                </div>
+              ) : licenses.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  No active licenses yet.
+                </div>
+              ) : (
+                licenses.map((license) => (
+                  <div
+                    key={license.id}
+                    className="rounded-2xl border border-border bg-card/50 p-5"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-lg font-bold">
+                          <KeyRound className="h-4 w-4" />
+                          {license.products?.name || "Unknown product"}
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4" />
+                            Status: {license.status}
+                          </span>
+
+                          <span className="inline-flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Activated:{" "}
+                            {new Date(license.activated_at).toLocaleString()}
+                          </span>
+
+                          <span className="inline-flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Expires:{" "}
+                            {license.expires_at
+                              ? new Date(license.expires_at).toLocaleString()
+                              : "Never"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {license.products?.slug ? (
+                        <Button
+                          variant="outline"
+                          className="rounded-2xl"
+                          onClick={() =>
+                            navigate(`/products/${license.products?.slug}`)
+                          }
+                        >
+                          View product
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
