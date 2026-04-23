@@ -30,6 +30,13 @@ type UserLicense = {
   } | null;
 };
 
+const downloadLinks: Record<string, string> = {
+  "csgo-2": "#",
+  "valorant": "#",
+  "arc-raiders": "#",
+  "roblox": "#",
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -47,9 +54,7 @@ const Dashboard = () => {
   const stats = [
     {
       label: "Active licenses",
-      value: String(
-        licenses.filter((license) => license.status === "active").length
-      ),
+      value: String(licenses.length),
       icon: KeyRound,
     },
     {
@@ -87,6 +92,7 @@ const Dashboard = () => {
         )
       `
       )
+      .eq("status", "active")
       .order("created_at", { ascending: false });
 
     setLoadingLicenses(false);
@@ -174,6 +180,30 @@ const Dashboard = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleDownload = (slug?: string) => {
+    if (!slug) {
+      toast({
+        title: "Download unavailable",
+        description: "This product does not have a download link yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const url = downloadLinks[slug];
+
+    if (!url || url === "#") {
+      toast({
+        title: "Download unavailable",
+        description: "This product does not have a download link yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="relative min-h-screen">
       <SiteOrbs />
@@ -247,7 +277,7 @@ const Dashboard = () => {
               Your licenses
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              All activated products on your account.
+              All currently active licenses on your account.
             </p>
 
             <div className="mt-6 space-y-4">
@@ -294,17 +324,14 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      {license.products?.slug ? (
-                        <Button
-                          variant="outline"
-                          className="rounded-2xl"
-                          onClick={() =>
-                            navigate(`/products/${license.products?.slug}`)
-                          }
-                        >
-                          View product
-                        </Button>
-                      ) : null}
+                      <Button
+                        variant="outline"
+                        className="rounded-2xl"
+                        onClick={() => handleDownload(license.products?.slug)}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
                     </div>
                   </div>
                 ))
