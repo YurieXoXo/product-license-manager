@@ -42,7 +42,7 @@ const Index = () => {
                 <span className="block text-gradient-brand pb-2">your Cheats.</span>
               </h1>
               <p className="mt-5 max-w-[560px] text-base leading-relaxed text-muted-foreground">
-                Premium game enhancement tools with daily updates, fair pricing, and a safety-first approach. Your main account stays protected.
+                Premium cheats with daily updates, fair pricing, and a safety first approach.
               </p>
             </div>
 
