@@ -41,7 +41,7 @@ const Admin = () => {
   const { user, loading } = useAuth();
 
   // CHANGE THIS TO YOUR EMAIL
-  const adminEmail = "your@email.com";
+  const adminEmail = "yurieforlife@gmail.com";
   const isAdmin = user?.email === adminEmail;
 
   const [products, setProducts] = useState<Product[]>([]);
