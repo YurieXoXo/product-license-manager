@@ -9,6 +9,7 @@ import {
   Search,
   MessageSquare,
   CheckCircle2,
+  ShoppingCart,
 } from "lucide-react";
 
 import SiteHeader from "@/components/SiteHeader";
@@ -48,6 +49,18 @@ type SupportTicket = {
   created_at: string;
 };
 
+type PurchaseTicket = {
+  id: string;
+  email: string;
+  product_name: string;
+  tier: string;
+  price: number;
+  payment_method: string;
+  status: "open" | "payment_received" | "completed" | "cancelled";
+  license_key: string | null;
+  created_at: string;
+};
+
 const Admin = () => {
   const { user, loading } = useAuth();
 
@@ -57,6 +70,7 @@ const Admin = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [keys, setKeys] = useState<LicenseKeyRow[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [purchaseTickets, setPurchaseTickets] = useState<PurchaseTicket[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const [newKey, setNewKey] = useState("");
@@ -151,9 +165,34 @@ const Admin = () => {
     setTickets((data as SupportTicket[]) || []);
   };
 
+  const fetchPurchaseTickets = async () => {
+    const { data, error } = await supabase
+      .from("purchase_tickets")
+      .select(
+        "id, email, product_name, tier, price, payment_method, status, license_key, created_at"
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Failed to load purchase tickets",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPurchaseTickets((data as PurchaseTicket[]) || []);
+  };
+
   const refreshAll = async () => {
     setLoadingData(true);
-    await Promise.all([fetchProducts(), fetchKeys(), fetchTickets()]);
+    await Promise.all([
+      fetchProducts(),
+      fetchKeys(),
+      fetchTickets(),
+      fetchPurchaseTickets(),
+    ]);
     setLoadingData(false);
   };
 
@@ -446,72 +485,121 @@ const Admin = () => {
             <span className="text-gradient-brand">Admin Panel</span>
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Manage license keys and support tickets.
+            Manage license keys, purchases, and support tickets.
           </p>
         </div>
+
+        <section className="mt-10 rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="h-5 w-5" />
+            <h2 className="text-2xl font-extrabold tracking-tight">
+              Purchase tickets
+            </h2>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Payment requests created from checkout.
+          </p>
+
+          <div className="mt-6 space-y-4">
+            {loadingData ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                Loading purchase tickets...
+              </div>
+            ) : purchaseTickets.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                No purchase tickets yet.
+              </div>
+            ) : (
+              purchaseTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="rounded-2xl border border-border bg-card/50 p-5"
+                >
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-lg font-bold">
+                          {ticket.product_name}
+                        </h3>
+                        <span className="rounded-full border border-border px-3 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          {ticket.status}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                        <span>User: {ticket.email}</span>
+                        <span>Plan: {ticket.tier}</span>
+                        <span>Price: ${ticket.price}</span>
+                        <span>Payment: {ticket.payment_method}</span>
+                        <span>
+                          Created:{" "}
+                          {new Date(ticket.created_at).toLocaleString()}
+                        </span>
+                      </div>
+
+                      {ticket.license_key ? (
+                        <div className="mt-3 rounded-xl border border-border bg-background/50 p-3 font-mono text-xs break-all">
+                          Key: {ticket.license_key}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Button asChild variant="outline" className="rounded-2xl">
+                      <Link to={`/purchase/${ticket.id}`}>
+                        Open purchase chat
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
         <section className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
             <h2 className="text-2xl font-extrabold tracking-tight">
               Create license key
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Pick a product, generate or paste a key, then save it.
-            </p>
 
             <form className="mt-6 space-y-4" onSubmit={handleCreateKey}>
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  Product
-                </label>
-                <select
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">Select product</option>
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+                className="h-12 w-full rounded-2xl border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Select product</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  License key
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    value={newKey}
-                    onChange={(e) => setNewKey(e.target.value.toUpperCase())}
-                    placeholder="ABCDE-FGHIJ-KLMNO-PQRST"
-                    className="h-12 rounded-2xl"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-12 rounded-2xl"
-                    onClick={handleGenerateKey}
-                  >
-                    Generate
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  Duration (days)
-                </label>
+              <div className="flex gap-2">
                 <Input
-                  type="number"
-                  min="1"
-                  value={durationDays}
-                  onChange={(e) => setDurationDays(e.target.value)}
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value.toUpperCase())}
+                  placeholder="ABCDE-FGHIJ-KLMNO-PQRST"
                   className="h-12 rounded-2xl"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 rounded-2xl"
+                  onClick={handleGenerateKey}
+                >
+                  Generate
+                </Button>
               </div>
+
+              <Input
+                type="number"
+                min="1"
+                value={durationDays}
+                onChange={(e) => setDurationDays(e.target.value)}
+                className="h-12 rounded-2xl"
+              />
 
               <Button
                 type="submit"
@@ -526,14 +614,9 @@ const Admin = () => {
 
           <div className="rounded-3xl border border-border bg-gradient-panel p-6 shadow-elegant">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-2xl font-extrabold tracking-tight">
-                  License keys
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Manage all existing keys.
-                </p>
-              </div>
+              <h2 className="text-2xl font-extrabold tracking-tight">
+                License keys
+              </h2>
 
               <div className="relative w-full md:w-72">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -572,15 +655,6 @@ const Admin = () => {
                           <span>Product: {key.products?.name || "Unknown"}</span>
                           <span>Status: {key.status}</span>
                           <span>Days: {key.duration_days}</span>
-                          <span>
-                            Created: {new Date(key.created_at).toLocaleString()}
-                          </span>
-                          <span>
-                            Used:{" "}
-                            {key.used_at
-                              ? new Date(key.used_at).toLocaleString()
-                              : "Not used"}
-                          </span>
                         </div>
                       </div>
 
@@ -630,9 +704,6 @@ const Admin = () => {
               Support tickets
             </h2>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Review and manage user support requests.
-          </p>
 
           <div className="mt-6 space-y-4">
             {loadingData ? (
@@ -660,10 +731,6 @@ const Admin = () => {
 
                       <div className="mt-2 text-sm text-muted-foreground">
                         From: {ticket.email}
-                      </div>
-
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Created: {new Date(ticket.created_at).toLocaleString()}
                       </div>
 
                       <p className="mt-4 whitespace-pre-wrap text-sm text-foreground/85">
