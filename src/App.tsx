@@ -9,6 +9,8 @@ import SupportTicketDetail from "@/pages/SupportTicketDetail";
 import ProductDetail from "@/pages/ProductDetail";
 import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
+import Checkout from "@/pages/Checkout";
+import PurchaseTicketDetail from "@/pages/PurchaseTicketDetail";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -37,6 +39,24 @@ const App = () => {
           element={
             <ProtectedRoute>
               <SupportTicketDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout/:slug"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/purchase/:ticketId"
+          element={
+            <ProtectedRoute>
+              <PurchaseTicketDetail />
             </ProtectedRoute>
           }
         />
