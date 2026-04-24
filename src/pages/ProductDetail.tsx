@@ -61,12 +61,9 @@ const ProductDetail = () => {
   const logo = productLogos[product.slug];
 
   const handleCheckout = () => {
-    toast({
-      title: `${product.name} — ${tierMeta[selected].label}`,
-      description: `Selected tier ready for checkout: $${product.pricing[selected]}`,
-    });
+    window.location.href = `/checkout/${product.slug}?tier=${selected}`;
   };
-
+  
   return (
     <div className="relative min-h-screen">
       <SiteOrbs />
