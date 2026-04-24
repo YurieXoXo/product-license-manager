@@ -205,28 +205,25 @@ const ProductDetail = () => {
           </div>
         </section>
 
-        {/* Screenshots */}
+        {/* Video */}
         <section className="mt-16">
-          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Screenshots</h2>
-          <p className="mt-2 text-sm text-muted-foreground">A look at the interface and in-game overlays.</p>
-
-          <div className="mt-6 grid gap-5 md:grid-cols-3">
-            {product.screenshots.map((shot, i) => (
-              <div
-                key={shot.title}
-                className={`relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-gradient-to-br ${shot.gradient} shadow-elegant`}
-              >
-                <div className="absolute inset-0 [background:radial-gradient(circle_at_1px_1px,hsl(0_0%_100%/0.12)_1px,transparent_1.3px)] [background-size:14px_14px] opacity-50" />
-                <div className="absolute inset-0 grid place-items-center">
-                  <div className="rounded-2xl border border-border bg-background/40 px-5 py-3 text-sm font-bold backdrop-blur-md">
-                    {shot.title}
-                  </div>
-                </div>
-                <div className="absolute bottom-3 left-3 rounded-full bg-background/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest backdrop-blur">
-                  {String(i + 1).padStart(2, "0")} / {String(product.screenshots.length).padStart(2, "0")}
-                </div>
-              </div>
-            ))}
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+            Product preview
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Watch a quick overview of the interface and features.
+          </p>
+        
+          <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-elegant">
+            <div className="aspect-video w-full">
+              <iframe
+                className="h-full w-full"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                title={`${product.name} preview video`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </div>
         </section>
 
