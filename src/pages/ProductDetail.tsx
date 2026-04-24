@@ -9,11 +9,18 @@ import { toast } from "@/hooks/use-toast";
 
 type Tier = "day" | "month" | "lifetime";
 
+const productLogos: Record<string, string> = {
+  "arc-raiders": "/products/ARC.png",
+  "csgo-2": "/products/CSGO.png",
+  roblox: "/products/ROBLOX.png",
+  valorant: "/products/Valo.png",
+};
+
 const tierMeta: Record<Tier, { label: string; sub: string; perks: string[] }> = {
   day: {
     label: "Day",
     sub: "24 hours of full access",
-    perks: ["All features unlocked", "Anti-cheat protection", "Email support"],
+    perks: ["All features unlocked", "Protection included", "Email support"],
   },
   month: {
     label: "Monthly",
@@ -39,7 +46,9 @@ const ProductDetail = () => {
         <SiteHeader />
         <div className="mx-auto max-w-2xl px-6 py-24 text-center">
           <h1 className="text-3xl font-extrabold">Product not found</h1>
-          <p className="mt-3 text-muted-foreground">We couldn't find that product.</p>
+          <p className="mt-3 text-muted-foreground">
+            We couldn't find that product.
+          </p>
           <Button asChild className="mt-6">
             <Link to="/">Back to home</Link>
           </Button>
@@ -49,6 +58,7 @@ const ProductDetail = () => {
   }
 
   const acc = accentMap[product.accent];
+  const logo = productLogos[product.slug];
 
   const handleCheckout = () => {
     toast({
@@ -63,11 +73,13 @@ const ProductDetail = () => {
       <SiteHeader />
 
       <main className="relative mx-auto w-full max-w-[1280px] px-4 pb-24 pt-8 md:px-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to products
         </Link>
 
-        {/* Hero */}
         <section className="relative mt-6 overflow-hidden rounded-[28px] border border-border bg-gradient-panel p-7 shadow-elegant md:p-12">
           <div
             className="pointer-events-none absolute inset-0 opacity-60"
@@ -75,30 +87,49 @@ const ProductDetail = () => {
               background: `radial-gradient(circle at 20% 30%, rgb(${acc.color} / 0.22), transparent 35%), radial-gradient(circle at 80% 0%, rgb(${acc.color} / 0.18), transparent 35%)`,
             }}
           />
+
           <div className="relative grid gap-10 md:grid-cols-[1.1fr_0.9fr]">
             <div>
               <span
                 className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-widest"
-                style={{ borderColor: `rgb(${acc.color} / 0.4)`, background: `rgb(${acc.color} / 0.1)`, color: `rgb(${acc.color})` }}
+                style={{
+                  borderColor: `rgb(${acc.color} / 0.4)`,
+                  background: `rgb(${acc.color} / 0.1)`,
+                  color: `rgb(${acc.color})`,
+                }}
               >
                 <Zap className="h-3 w-3" /> {product.tagline}
               </span>
+
               <h1 className="mt-5 text-5xl font-black leading-[0.9] tracking-[-0.06em] md:text-7xl">
                 <span className="text-gradient-brand">{product.name}</span>
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">{product.description}</p>
+
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
                 <div className="glass rounded-2xl px-4 py-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Platform</div>
-                  <div className="mt-1 text-sm font-bold">{product.platform}</div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Platform
+                  </div>
+                  <div className="mt-1 text-sm font-bold">
+                    {product.platform}
+                  </div>
                 </div>
+
                 <div className="glass rounded-2xl px-4 py-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Type</div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Type
+                  </div>
                   <div className="mt-1 text-sm font-bold">{product.type}</div>
                 </div>
+
                 <div className="glass rounded-2xl px-4 py-3">
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Status</div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                    Status
+                  </div>
                   <div className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-success">
                     <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-success" />
                     {product.status}
@@ -110,28 +141,44 @@ const ProductDetail = () => {
             <div className="relative">
               <div
                 className="relative aspect-square w-full overflow-hidden rounded-3xl border border-border bg-card shadow-elegant"
-                style={{ background: `linear-gradient(135deg, rgb(${acc.color} / 0.18), hsl(240 10% 6%) 60%)` }}
+                style={{
+                  background: `linear-gradient(135deg, rgb(${acc.color} / 0.18), hsl(240 10% 6%) 60%)`,
+                }}
               >
-                <div className="pointer-events-none absolute inset-0 -translate-x-[120%] animate-shine [background:linear-gradient(120deg,transparent_20%,hsl(0_0%_100%/0.08)_35%,transparent_48%)]" />
-                <div className="absolute inset-0 grid place-items-center">
-                  <div
-                    className="grid h-32 w-32 place-items-center rounded-3xl border border-border bg-secondary/60 shadow-glow"
-                    style={{ boxShadow: `0 30px 60px ${acc.glow}` }}
-                  >
-                    <span className="text-5xl font-black tracking-tight">{product.name.charAt(0)}</span>
+                <div className="pointer-events-none absolute inset-0 z-10 -translate-x-[120%] animate-shine [background:linear-gradient(120deg,transparent_20%,hsl(0_0%_100%/0.08)_35%,transparent_48%)]" />
+
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={`${product.name} logo`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center">
+                    <div
+                      className="grid h-32 w-32 place-items-center rounded-3xl border border-border bg-secondary/60 shadow-glow"
+                      style={{ boxShadow: `0 30px 60px ${acc.glow}` }}
+                    >
+                      <span className="text-5xl font-black tracking-tight">
+                        {product.name.charAt(0)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* License selector */}
         <section className="mt-12">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Choose your license</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Pick the plan that fits how you play.</p>
+              <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                Choose your license
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Pick the plan that fits how you play.
+              </p>
             </div>
           </div>
 
@@ -139,6 +186,7 @@ const ProductDetail = () => {
             {(Object.keys(tierMeta) as Tier[]).map((tier) => {
               const isSelected = selected === tier;
               const isFeatured = tier === "month";
+
               return (
                 <button
                   key={tier}
@@ -168,19 +216,35 @@ const ProductDetail = () => {
                       Most popular
                     </span>
                   )}
-                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{tierMeta[tier].label}</div>
+
+                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    {tierMeta[tier].label}
+                  </div>
+
                   <div className="mt-4 flex items-end gap-1.5">
-                    <span className="text-5xl font-black tracking-tight">${product.pricing[tier]}</span>
+                    <span className="text-5xl font-black tracking-tight">
+                      ${product.pricing[tier]}
+                    </span>
                     <span className="mb-1.5 text-sm font-medium text-muted-foreground">
-                      {tier === "lifetime" ? "/once" : tier === "month" ? "/mo" : "/day"}
+                      {tier === "lifetime"
+                        ? "/once"
+                        : tier === "month"
+                          ? "/mo"
+                          : "/day"}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{tierMeta[tier].sub}</p>
+
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {tierMeta[tier].sub}
+                  </p>
 
                   <ul className="mt-5 space-y-2.5">
                     {tierMeta[tier].perks.map((perk) => (
                       <li key={perk} className="flex items-start gap-2.5 text-sm">
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" style={{ color: `rgb(${acc.color})` }} />
+                        <Check
+                          className="mt-0.5 h-4 w-4 flex-shrink-0"
+                          style={{ color: `rgb(${acc.color})` }}
+                        />
                         <span className="text-foreground/85">{perk}</span>
                       </li>
                     ))}
@@ -195,6 +259,7 @@ const ProductDetail = () => {
               <Shield className="h-5 w-5 text-success" />
               Secure checkout · Instant delivery · Refund policy applies
             </div>
+
             <Button
               size="lg"
               onClick={handleCheckout}
@@ -205,7 +270,6 @@ const ProductDetail = () => {
           </div>
         </section>
 
-        {/* Video */}
         <section className="mt-16">
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
             Product preview
@@ -213,7 +277,7 @@ const ProductDetail = () => {
           <p className="mt-2 text-sm text-muted-foreground">
             Watch a quick overview of {product.name}.
           </p>
-        
+
           <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-elegant">
             <div className="aspect-video w-full">
               <iframe
@@ -227,10 +291,13 @@ const ProductDetail = () => {
           </div>
         </section>
 
-        {/* Features */}
         <section className="mt-16">
-          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">Features</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Everything you get with {product.name}.</p>
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+            Features
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Everything you get with {product.name}.
+          </p>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {product.features.map((f) => (
@@ -245,14 +312,23 @@ const ProductDetail = () => {
                     backgroundSize: "8px 8px, 100% 100%",
                   }}
                 />
+
                 <div
                   className="relative grid h-11 w-11 place-items-center rounded-xl border border-border bg-secondary"
                   style={{ boxShadow: `0 8px 20px ${acc.glow}` }}
                 >
-                  <Zap className="h-5 w-5" style={{ color: `rgb(${acc.color})` }} />
+                  <Zap
+                    className="h-5 w-5"
+                    style={{ color: `rgb(${acc.color})` }}
+                  />
                 </div>
-                <h3 className="relative mt-5 text-lg font-extrabold tracking-tight">{f.title}</h3>
-                <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">{f.description}</p>
+
+                <h3 className="relative mt-5 text-lg font-extrabold tracking-tight">
+                  {f.title}
+                </h3>
+                <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {f.description}
+                </p>
               </div>
             ))}
           </div>
