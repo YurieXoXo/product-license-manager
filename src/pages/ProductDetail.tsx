@@ -11,7 +11,7 @@ type Tier = "day" | "month" | "lifetime";
 
 const tierMeta: Record<Tier, { label: string; sub: string; perks: string[] }> = {
   day: {
-    label: "Day Pass",
+    label: "Day",
     sub: "24 hours of full access",
     perks: ["All features unlocked", "Anti-cheat protection", "Email support"],
   },
